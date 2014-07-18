@@ -5,6 +5,7 @@ import etcd
 import ast
 
 data = yaml.load(open('config.yaml', 'r'))
+
 marathon_client = MarathonClient('http://' + str(data['marathon']['host']) + ':' + str(data['marathon']['port']))
 etcd_client = etcd.Client(host = str(data['etcd']['host']), port = int(data['etcd']['port']))
 #
