@@ -85,6 +85,14 @@ def register_container(service_name, encoded_labels, container_name, info):
 		etcd_client.delete(container_key)
 	etcd_client.write(container_key+'/info', info)
 
+def deregister_container(service_name, encoded_labels, container_name):
+	print 'im about to deregister your container'
+	print encoded_labels
+	container_key = '/services/'+service_name+'/'+encoded_labels+'/containers/'+container_name
+	print container_key
+	etcd_client.delete(container_key, recursive=True)
+	# print 'this does not /work'
+
 if __name__ == "__main__":
 
 	create_service('test')

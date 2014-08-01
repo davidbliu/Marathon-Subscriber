@@ -37,21 +37,16 @@ def callback():
 	# try:
 	event = request.get_json()
 	if event['eventType'] == "status_update_event":
-		#
-		# register/deregister logic goes here
-		#
+
 		status = event['taskStatus']
 		host = event['host']
 		taskId = event['taskId']
 		appId = event['appID']
 
-		
-		
-		#
-		# register all running containers with etcd
-		#
 		import register as reg
-		service_name = reg.decode_marathon_id(appId)['service']
+		# service_name = reg.decode_marathon_id(appId)['service']
+		decoded_app_data = reg.decode_marathon_id(appId)
+		service_name = decoded_app_data['service']
 		# 
 		# status 1 means running 2 means killed
 		print 'a '+str(service_name)+' container changed: status '+str(status)
@@ -63,7 +58,8 @@ def callback():
 		else:
 			print 'remove dead container '+str(taskId)
 			reg.deregister_with_etcd(service_name, taskId)
-		reg.clean_service(service_name)
+		print 'cleaning up....'
+		reg.clean_service(service_name, decoded_app_data['labels'])
 		# reg.register_all()
 		# print 'done'
 	# except Exception as failure:

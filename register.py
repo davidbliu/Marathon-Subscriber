@@ -35,16 +35,11 @@ def register_with_etcd(service, name, host, port_mapping, labels = []):
 # remove a container from etcd
 #
 def deregister_with_etcd(service, name):
-	etcd_key = "/"+service
-	try:
-		old_dict = etcd_client.read(etcd_key).value
-	except:
-		new_dict = {}
-		etcd_client.write(etcd_key, new_dict)
-	full_instances_dict = etcd_client.read(etcd_key).value
-	full_instances_dict = ast.literal_eval(full_instances_dict)
-	full_instances_dict.pop(name, None)
-	etcd_client.write(etcd_key, full_instances_dict)
+	print 'deregistering '+str(name)
+	app_data = decode_marathon_id(name)
+	print 'labels are '+str(app_data['labels'])
+	etcd_driver.deregister_container(service, str(sorted(app_data['labels'])), name)
+
 
 
 #
@@ -54,17 +49,23 @@ def deregister_with_etcd(service, name):
 def clean_service(service, labels= []):
 	service_tasks = marathon_client.list_tasks()
 	service_task_names = map(lambda x: x.id, service_tasks)
-	print service_task_names
-	print 'those are the running services'
+
 	#
 	# loop through etcd instances, if name not in tasks, clean up
 	#
-	service_etcd_instances = ast.literal_eval(etcd_client.read('/'+str(service)).value)
-	for instance_name in service_etcd_instances.keys():
-		if instance_name not in service_task_names:
-			print 'this instance was not in my list '+str(instance_name)
-			deregister_with_etcd(service, instance_name)
-	print 'done cleaning service '+str(service)
+	service_name = service
+	encoded_labels = str(sorted(labels))
+	etcd_container_names = etcd_driver.get_group_container_names(service_name, encoded_labels)
+	print etcd_container_names
+	for container_name in etcd_container_names:
+		if container_name not in service_task_names:
+			deregister_with_etcd(service, container_name)
+	# service_etcd_instances = ast.literal_eval(etcd_client.read('/'+str(service)).value)
+	# for instance_name in service_etcd_instances.keys():
+	# 	if instance_name not in service_task_names:
+	# 		print 'this instance was not in my list '+str(instance_name)
+	# 		deregister_with_etcd(service, instance_name)
+	# print 'done cleaning service '+str(service)
 	
 
 def get_task(taskId):
