@@ -46,7 +46,7 @@ def deregister_with_etcd(service, name):
 # makes sure there are no tasks in etcd that do not correspond with tasks known by marathon
 # basically syncing up, no actual task removal involved.
 #
-def clean_service(service, labels= []):
+def clean_service(service):
 	service_tasks = marathon_client.list_tasks()
 	service_task_names = map(lambda x: x.id, service_tasks)
 
@@ -54,9 +54,10 @@ def clean_service(service, labels= []):
 	# loop through etcd instances, if name not in tasks, clean up
 	#
 	service_name = service
-	encoded_labels = str(sorted(labels))
-	etcd_container_names = etcd_driver.get_group_container_names(service_name, encoded_labels)
+	etcd_container_names = etcd_driver.get_service_containers(service_name)
+	print 'these are your containers'
 	print etcd_container_names
+	# print etcd_container_names
 	for container_name in etcd_container_names:
 		if container_name not in service_task_names:
 			deregister_with_etcd(service, container_name)

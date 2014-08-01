@@ -1,7 +1,8 @@
 import etcd
 import ast
-
-etcd_client = etcd.Client(host='54.193.154.204', port=4001)
+import os
+etcd_host_address = os.environ['ETCD_HOST_ADDRESS'] 
+etcd_client = etcd.Client(host=etcd_host_address, port=4001)
 #
 # create no matter what
 #
@@ -48,6 +49,15 @@ def get_service_groups(service_name):
 		groups.append(str(s.key.replace('/services/'+service_name, '').replace('/','')))
 	return groups
 
+
+def get_service_containers(service_name):
+	all_containers = []
+	groups = get_service_groups(service_name)
+	for group in groups:
+		containers = get_group_container_names(service_name, group)
+		all_containers += containers
+	return all_containers
+	
 def get_group_config(service_name, encoded_labels):
 	group_key = '/services/'+service_name+'/'+encoded_labels
 	return ast.literal_eval(etcd_client.read(group_key+'/config').value)
@@ -60,7 +70,9 @@ def get_group_container_names(service_name, encoded_labels):
 	containers = []
 	containers_root_key = '/services/'+service_name+'/'+encoded_labels+'/containers'
 	for c in etcd_client.read(containers_root_key).children:
-		containers.append(str(c.key.split('/')[-1]))
+		container_string = str(c.key.split('/')[-1])
+		if container_string != 'containers':
+			containers.append(container_string)
 	return containers
 
 def container_exists(service_name, encoded_labels, container_name):
@@ -71,7 +83,7 @@ def container_exists(service_name, encoded_labels, container_name):
 
 def get_container_info(service_name, encoded_labels, container_name):
 	container_info_key = '/services/'+service_name+'/'+encoded_labels+'/containers/'+container_name+'/info'
-	return etcd_client.read(container_info_key).value
+	return ast.literal_eval(etcd_client.read(container_info_key).value)
 
 def set_container_info(service_name, encoded_labels, container_name, info):
 	container_info_key = '/services/'+service_name+'/'+encoded_labels+'/containers/'+container_name+'/info'
@@ -95,11 +107,14 @@ def deregister_container(service_name, encoded_labels, container_name):
 
 if __name__ == "__main__":
 
-	create_service('test')
-	create_group('test', 'test-group', {'hello':'pig'})
-	print get_service_names()
-	print get_group_config('test','test-group')
-	register_container('test','test-group', 'test-container', 'random-info')
-	print get_group_container_names('test','test-group')
-	print get_service_groups('test')
-	print get_container_info('test', 'test-group', 'test-container')
+	# create_service('test')
+	# create_group('test', 'test-group', {'hello':'pig'})
+	# print get_service_names()
+	# print get_group_config('test','test-group')
+	# register_container('test','test-group', 'test-container', 'random-info')
+	# print get_group_container_names('test','test-group')
+	# print get_service_groups('test')
+	# print get_container_info('test', 'test-group', 'test-container')vice
+
+	for s in get_service_names():
+		etcd_client.delete('/services/'+s, recursive=True)

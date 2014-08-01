@@ -35,7 +35,9 @@ def on_exit(marathon_client, callback_url):
 @app.route('/callback', methods=['GET', 'POST'])
 def callback():
 	# try:
+
 	event = request.get_json()
+	print event
 	if event['eventType'] == "status_update_event":
 
 		status = event['taskStatus']
@@ -59,21 +61,13 @@ def callback():
 			print 'remove dead container '+str(taskId)
 			reg.deregister_with_etcd(service_name, taskId)
 		print 'cleaning up....'
-		reg.clean_service(service_name, decoded_app_data['labels'])
+		reg.clean_service(service_name)
 		# reg.register_all()
 		# print 'done'
 	# except Exception as failure:
 	#     print 'wut...something failed...'
 	#     print failure
 	return jsonify(result={"status": 200})
-
-@app.route('/info', methods = ['GET', 'POST'])
-def info():
-	print 'info is not here'
-
-	# except:
-	#     print 'wut wut'
-	return render_template('etcd_view.html', registered = '')
 
 if __name__ == '__main__':
 
@@ -82,6 +76,7 @@ if __name__ == '__main__':
 	# host = socket.gethostbyname(socket.gethostname())
 
 	marathon_url = 'http://localhost:8080'
+	# marathon_url = os.environ['MARATHON_URL']
 	callback_url = 'http://localhost:5000/callback'
 	print 'registering with marathon'
 	m = marathon.MarathonClient(marathon_url)

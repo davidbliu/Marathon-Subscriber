@@ -83,7 +83,8 @@ if __name__ == "__main__":
     
     print 'hi'
     print test_config
+    etcd_driver.create_service('ingestor')
     labels = ['testing']
-    etcd_driver.create_group('ingestor', 'testing', test_config)
+    # etcd_driver.create_group('ingestor', 'testing', test_config)
     sync_group_config('ingestor', labels, test_config)
     launch_app('ingestor', 'ingestorD.L-testing-D.L639d547a-753e-43be-bfe9-c10d9eb63b44D.L', test_config, labels = labels)
