@@ -12,19 +12,10 @@ import os
 import shutil
 import ast
 import json
-#
-# copy config yaml file to this directory. should be included in volume
-#
-# shutil.copyfile('/opt/data/config.yaml', 'config.yaml')d
-#
-# import etcd registration tools from regisiter.py
-#
 
 #
 # for storing events (TODO)
 #
-from stores import InMemoryStore, SyslogUdpStore
-
 
 app = Flask(__name__)
 
@@ -33,49 +24,10 @@ events = None
 event_store = None
 data = None
 marathon_client = None
+
 def on_exit(marathon_client, callback_url):
 	print 'exiting app.....'
 	marathon_client.delete_event_subscription(callback_url)
-
-#
-# write latest data into config file
-# set data here as well for /info path
-#
-@app.route('/reconfigure', methods=['POST'])
-def reconfigure():
-	global data
-	global marathon_client
-	data = request.form
-	data = request.form['config_data']
-	#
-	# write that into config file
-	#
-	data = ast.literal_eval(data)
-
-	print type(data)
-	with open('config.yaml', 'w') as outfile:
-		outfile.write(yaml.dump(data))
-	#
-	# register subscriber with marathon
-	#
-	# print 'creating event subscriber to marathon...'
-	data = yaml.load(open('config.yaml', 'r'))
-	
-	# print 'this is data'
-	# print data
-	marathon_url = 'http://' + data['marathon']['host'] + ':' + str(data['marathon']['port'])
-	print 'trying this marathon url: '+ str(marathon_url)
-	callback_url = 'http://localhost:5000/callback' # testing locally
-	host_address = os.environ.get('CONTAINER_HOST_ADDRESS')
-	host_port = os.environ.get('CONTAINER_HOST_PORT')
-	if host_address and host_port:
-		callback_url = 'http://'+str(host_address)+':'+str(host_port)+'/callback'
-	m = marathon.MarathonClient(marathon_url)
-	m.create_event_subscription(callback_url)
-	atexit.register(on_exit, m, callback_url)
-	etcd_client = etcd.Client(host = str(data['etcd']['host']), port = int(data['etcd']['port']))
-	print 'successfully registered...app has started'
-	return jsonify(result={"status": 200})
 
 #
 # notify when task created/destroyed
@@ -121,33 +73,24 @@ def callback():
 
 @app.route('/info', methods = ['GET', 'POST'])
 def info():
-	registered = {}
-	#
-	# loop through services
-	#
-	etcd_client = etcd.Client(host = str(data['etcd']['host']), port = int(data['etcd']['port']))
-	for service in data.keys():
-		registered[service] = {}
-		print 'trying this key '+str(service)
-		try:
-			full_instances_dict = etcd_client.read('/'+service).value
-			full_instances_dict = ast.literal_eval(full_instances_dict)
-			for instance in full_instances_dict.keys():
-				registered[service][instance] = full_instances_dict[instance]
-			print registered
-		except Exception as failure:
-			print failure
-			print 'cannot read this key from etcd'
-			# print registered
+	print 'info is not here'
 
 	# except:
 	#     print 'wut wut'
-	return render_template('etcd_view.html', registered = registered)
+	return render_template('etcd_view.html', registered = '')
 
 if __name__ == '__main__':
 
 	data = None
-	# host = 'localhost'
-	host = socket.gethostbyname(socket.gethostname())
+	host = 'localhost'
+	# host = socket.gethostbyname(socket.gethostname())
+
+	marathon_url = 'http://localhost:8080'
+	callback_url = 'http://localhost:5000/callback'
+	print 'registering with marathon'
+	m = marathon.MarathonClient(marathon_url)
+	m.create_event_subscription(callback_url)
+	atexit.register(on_exit, m, callback_url)
+
 	print 'starting app on '+str(host)
 	app.run(port=5000, host=host)
