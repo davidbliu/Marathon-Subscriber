@@ -83,5 +83,7 @@ if __name__ == '__main__':
 	m.create_event_subscription(callback_url)
 	atexit.register(on_exit, m, callback_url)
 
+	import register as reg
+	reg.clean_all()
 	print 'starting app on '+str(host)
 	app.run(port=5000, host=host)

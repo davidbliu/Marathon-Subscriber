@@ -14,7 +14,7 @@ etcd_client = etcd.Client(host = str(data['etcd']['host']), port = int(data['etc
 #
 def register_with_etcd(service, name, host, port_mapping, labels = []):
   # throw an error if cannot connect to client?
-  encoded_labels = str(sorted(labels))
+  encoded_labels = encode_labels(labels)
   instance_dict = {}
   instance_dict['service_name'] = service
   instance_dict['instance_name'] = name
@@ -38,7 +38,7 @@ def deregister_with_etcd(service, name):
 	print 'deregistering '+str(name)
 	app_data = decode_marathon_id(name)
 	print 'labels are '+str(app_data['labels'])
-	etcd_driver.deregister_container(service, str(sorted(app_data['labels'])), name)
+	etcd_driver.deregister_container(service, encode_labels(app_data['labels']), name)
 
 
 
@@ -55,19 +55,24 @@ def clean_service(service):
 	#
 	service_name = service
 	etcd_container_names = etcd_driver.get_service_containers(service_name)
-	print 'these are your containers'
-	print etcd_container_names
 	# print etcd_container_names
 	for container_name in etcd_container_names:
 		if container_name not in service_task_names:
 			deregister_with_etcd(service, container_name)
-	# service_etcd_instances = ast.literal_eval(etcd_client.read('/'+str(service)).value)
-	# for instance_name in service_etcd_instances.keys():
-	# 	if instance_name not in service_task_names:
-	# 		print 'this instance was not in my list '+str(instance_name)
-	# 		deregister_with_etcd(service, instance_name)
-	# print 'done cleaning service '+str(service)
-	
+	#
+	# remove groups that no longer have containers
+	#
+	for group in etcd_driver.get_service_groups(service):
+		if len(etcd_driver.get_group_container_names(service, group)) == 0:
+			etcd_driver.remove_group(service, group)
+
+	#
+	# if this service no longer has containers, remove it
+	#
+def clean_all():
+	services = etcd_driver.get_service_names()
+	for serv in services:
+		clean_service(serv)	
 
 def get_task(taskId):
 	all_tasks = marathon_client.list_tasks()
@@ -80,6 +85,9 @@ def get_task(taskId):
 			this_task = task
 	return this_task
 
+
+def encode_labels(labels):
+	return str(sorted(labels)).replace(' ', '')
 
 def decode_marathon_id(marathon_id, id_separator = 'D.L'):
     # split up id
@@ -97,7 +105,7 @@ def register_new_container(task_id):
 		app_id = task.app_id
 		app_data = decode_marathon_id(app_id)
 		original_labels = app_data['labels']
-		labels = str(sorted(original_labels))
+		labels = encode_labels(original_labels)
 		service = app_data['service']
 		container_name = task_id
 

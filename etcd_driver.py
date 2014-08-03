@@ -25,6 +25,14 @@ def create_group(service_name, encoded_labels, config):
 	etcd_client.write(group_string+'/config', config)
 	etcd_client.write(group_string+'/containers', None, dir=True)
 
+def remove_service(service_name):
+	service_string = '/services/'+service_name
+	etcd_client.delete(service_string, recursive=True)
+def remove_group(service_name, encoded_labels):
+	group_string = '/services/'+service_name+'/'+encoded_labels
+	etcd_client.delete(group_string, recursive=True)
+
+
 	
 def service_exists(service_name):
 	if '/services/'+service_name in etcd_client:
@@ -40,7 +48,9 @@ def group_exists(service_name, encoded_labels):
 def get_service_names():
 	names = []
 	for s in etcd_client.read('/services').children:
-		names.append(str(s.key.replace('/services', '').replace('/','')))
+		service = str(s.key.replace('/services', '').replace('/',''))
+		if service != '':
+			names.append(service)
 	return names
 
 def get_service_groups(service_name):
@@ -67,8 +77,14 @@ def set_group_config(service_name, encoded_labels, config):
 	etcd_client.write(group_key+'/config', config)
 
 def get_group_container_names(service_name, encoded_labels):
+	# if not service_exists(service_name) or not group_exists(service_name, encoded_labels):
+	# 	print 'one doesnt exist'
+	# 	return []
 	containers = []
 	containers_root_key = '/services/'+service_name+'/'+encoded_labels+'/containers'
+	if not containers_root_key in etcd_client:
+		print 'not in client'
+		return []
 	for c in etcd_client.read(containers_root_key).children:
 		container_string = str(c.key.split('/')[-1])
 		if container_string != 'containers':
@@ -89,9 +105,14 @@ def set_container_info(service_name, encoded_labels, container_name, info):
 	container_info_key = '/services/'+service_name+'/'+encoded_labels+'/containers/'+container_name+'/info'
 	etcd_client.write(container_info_key, info)
 #
-# registers container regardless of whether service or group exists
+# registers container
+# make sure service and group exist first
 #
 def register_container(service_name, encoded_labels, container_name, info):
+	if not service_exists(service_name):
+		create_service(service_name)
+	if not group_exists(service_name, encoded_labels):
+		create_group(service_name, encoded_labels)
 	container_key = '/services/'+service_name+'/'+encoded_labels+'/containers/'+container_name
 	if container_exists(service_name, encoded_labels, container_name):
 		etcd_client.delete(container_key)
