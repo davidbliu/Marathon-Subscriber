@@ -37,7 +37,7 @@ def callback():
 	# try:
 
 	event = request.get_json()
-	print event
+	# print event
 	if event['eventType'] == "status_update_event":
 
 		status = event['taskStatus']
@@ -51,16 +51,16 @@ def callback():
 		service_name = decoded_app_data['service']
 		# 
 		# status 1 means running 2 means killed
-		print 'a '+str(service_name)+' container changed: status '+str(status)
-		print 'reconfiguring etcd...'
+		# print 'a '+str(service_name)+' container changed: status '+str(status)
+		# print 'reconfiguring etcd...'
 		
 		if int(status) == 1:
-			print 'registering new container '+str(taskId)
+			print 'STARTED '+str(taskId)
 			reg.register_new_container(taskId)
 		else:
-			print 'remove dead container '+str(taskId)
+			print 'KILLED '+str(taskId)
 			reg.deregister_with_etcd(service_name, taskId)
-		print 'cleaning up....'
+		print 'CLEANING UP...'
 		reg.clean_service(service_name)
 		# reg.register_all()
 		# print 'done'

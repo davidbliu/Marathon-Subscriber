@@ -35,9 +35,9 @@ def register_with_etcd(service, name, host, port_mapping, labels = []):
 # remove a container from etcd
 #
 def deregister_with_etcd(service, name):
-	print 'deregistering '+str(name)
+	# print 'deregistering '+str(name)
 	app_data = decode_marathon_id(name)
-	print 'labels are '+str(app_data['labels'])
+	# print 'labels are '+str(app_data['labels'])
 	etcd_driver.deregister_container(service, encode_labels(app_data['labels']), name)
 
 
@@ -126,10 +126,10 @@ def register_new_container(task_id):
 				port_mapping[port_names[index]] = {}
 				port_mapping[port_names[index]]["external"] = ('0.0.0.0', str(task.ports[index])+'/tcp')
 				port_mapping[port_names[index]]["exposed"] = str(ports[index]) + '/tcp'
-		print service
-		print name
-		print host
-		print port_mapping
+		# print service
+		# print name
+		# print host
+		# print port_mapping
 		register_with_etcd(service, name, host, port_mapping, original_labels)
 	else:
 		print 'task was staged but not started...'
