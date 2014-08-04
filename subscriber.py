@@ -72,12 +72,22 @@ def callback():
 if __name__ == '__main__':
 
 	data = None
-	host = 'localhost'
-	# host = socket.gethostbyname(socket.gethostname())
+	# host = 'localhost'
+	host = socket.gethostbyname(socket.gethostname())
 
-	marathon_url = 'http://localhost:8080'
+	# marathon_url = 'http://localhost:8080'
+	marathon_host = os.environ['MARATHON_HOST']
+	marathon_port = '8080'
+	marathon_url = 'http://'+marathon_host+':'+marathon_port
+
 	# marathon_url = os.environ['MARATHON_URL']
-	callback_url = 'http://localhost:5000/callback'
+	host_address = os.environ.get('CONTAINER_HOST_ADDRESS')
+	host_port = os.environ.get('CONTAINER_HOST_PORT')
+	if host_address and host_port:
+		callback_url = 'http://'+str(host_address)+':'+str(host_port)+'/callback'
+	else:
+		print 'plz provide correct env variables dawg'
+		callback_url = 'http://localhost:5000/callback'
 	print 'registering with marathon'
 	m = marathon.MarathonClient(marathon_url)
 	m.create_event_subscription(callback_url)

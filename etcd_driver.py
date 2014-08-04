@@ -83,7 +83,7 @@ def get_group_container_names(service_name, encoded_labels):
 	containers = []
 	containers_root_key = '/services/'+service_name+'/'+encoded_labels+'/containers'
 	if not containers_root_key in etcd_client:
-		print 'not in client'
+		print 'group '+service_name+' '+encoded_labels+' not in client'
 		return []
 	for c in etcd_client.read(containers_root_key).children:
 		container_string = str(c.key.split('/')[-1])
@@ -119,10 +119,10 @@ def register_container(service_name, encoded_labels, container_name, info):
 	etcd_client.write(container_key+'/info', info)
 
 def deregister_container(service_name, encoded_labels, container_name):
-	print 'im about to deregister your container'
-	print encoded_labels
+	# print 'im about to deregister your container'
+	# print encoded_labels
 	container_key = '/services/'+service_name+'/'+encoded_labels+'/containers/'+container_name
-	print container_key
+	# print container_key
 	etcd_client.delete(container_key, recursive=True)
 	# print 'this does not /work'
 

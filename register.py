@@ -4,11 +4,19 @@ import sys
 import etcd
 import ast
 import etcd_driver
+import os
 # from Entities import *
-data = yaml.load(open('mesos.yaml', 'r'))
+# data = yaml.load(open('mesos.yaml', 'r'))
 
-marathon_client = MarathonClient('http://' + str(data['marathon']['host']) + ':' + str(data['marathon']['port']))
-etcd_client = etcd.Client(host = str(data['etcd']['host']), port = int(data['etcd']['port']))
+
+
+etcd_host = os.environ['ETCD_HOST_ADDRESS']
+etcd_port = 4001
+marathon_host = os.environ['MARATHON_HOST']
+marathon_port = '8080'
+
+marathon_client = MarathonClient('http://' + str(marathon_host) + ':' + str(marathon_port))
+etcd_client = etcd.Client(host = str(etcd_host), port = int(etcd_port))
 #
 # Registers a container with etcd
 #
