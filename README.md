@@ -5,7 +5,7 @@ subscriber to marathon for docker service discovery
 
 # Getting started
 
-set environment variables for ETCD_HOST, MARATHON_HOST, CONTAINER_HOST_ADDRESS, CONTAINER_HOST_PORT
+set environment variables for `ETCD_HOST`, `MARATHON_HOST`, `CONTAINER_HOST_ADDRESS`, `CONTAINER_HOST_PORT`
 * `ETCD_HOST` is etcd host address
 * `MARATHON_HOST` is marathon host address
 * `CONTAINER_HOST_ADDRESS` is the public ip of the host you are running subscriber on
