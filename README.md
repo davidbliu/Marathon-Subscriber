@@ -12,7 +12,8 @@ set environment variables for `ETCD_HOST`, `MARATHON_HOST`, `CONTAINER_HOST_ADDR
 * `CONTAINER_HOST_PORT` is the external (host) port you have mapped to container  port 5000
 
 ### example
-`docker run -t -p 5000:5000 -e ETCD_HOST={{etcd_host_ip}} -e MARATHON_HOST={{marathon_host_ip}} -e CONTAINER_HOST_ADDRESSS={{public_host_ip}} -e CONTAINER_HOST_PORT=5000 subscriber`
+`docker run -t -p 5000:5000 -e ETCD_HOST={{etcd_host_ip}} -e MARATHON_HOST={{marathon_host_ip}} -e 
+CONTAINER_HOST_ADDRESSS={{public_host_ip}} -e CONTAINER_HOST_PORT=5000 subscriber`
 
 # In progress
 
