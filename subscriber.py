@@ -12,7 +12,7 @@ import os
 import shutil
 import ast
 import json
-
+import etcd_driver
 #
 # for storing events (TODO)
 #
@@ -28,7 +28,12 @@ marathon_client = None
 def on_exit(marathon_client, callback_url):
 	print 'exiting app.....'
 	marathon_client.delete_event_subscription(callback_url)
-
+@app.route('/cleanup', methods=['GET','POST'])
+def cleanup():
+	services = etcd_driver.get_service_names()
+	for service in services:
+		reg.clean_service(service)
+	return jsonify(result={"status": 200})
 #
 # notify when task created/destroyed
 #
@@ -62,6 +67,7 @@ def callback():
 			reg.deregister_with_etcd(service_name, taskId)
 		print 'CLEANING UP...'
 		reg.clean_service(service_name)
+	
 		# reg.register_all()
 		# print 'done'
 	# except Exception as failure:
@@ -94,6 +100,9 @@ if __name__ == '__main__':
 	atexit.register(on_exit, m, callback_url)
 
 	import register as reg
-	reg.clean_all()
+	try:
+		reg.clean_all()
+	except:
+		print 'no services created yet'
 	print 'starting app on '+str(host)
 	app.run(port=5000, host=host)
